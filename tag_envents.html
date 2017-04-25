@@ -1,0 +1,411 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title>Tag Archery 66 Events</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+    <script src="local.js"></script>
+    <script src="moment-with-locales.js"></script>
+    <script src="api_key.js"></script>
+    <script id="config" type="text/javascript" charset="utf-8">
+        var $parameters = {
+            urlname: "Tag-Archery-66-Archery-Tag-a-Perpignan",
+            width: 400,
+            height: 570,
+            _name: "Meetup Group Stats",
+            _description: "Shows basic stats on your favorite Meetup group."
+        };
+        var $queries = {
+            groups: function () {
+                return mup_widget.api_call("/2/groups", {group_urlname: $parameters.urlname});
+            },
+            events: function (page) {
+                return mup_widget.api_call("/2/events", {group_urlname: $parameters.urlname, page: '1', offset:page-1});
+            }
+        };
+    </script>
+    <link rel="stylesheet" type="text/css" href="https://a248.e.akamai.net/secure.meetupstatic.com/style/widget.css">
+    <script type="text/javascript" charset="utf-8">
+        mup_widget.with_jquery(function ($, ctx) {
+            moment.locale('fr');
+            var totalPage;
+            var currentPage = 1;
+            var oBtnNext;
+            var oBtnPrev;
+            var group = '',
+                addEvent = function (event) {
+                    console.log(event);
+                    var venue = event.venue;
+                    //console.log(venue);
+                    var city;
+                    var nombrePlaces;
+                    var prix;
+                    if (!venue || !venue.city) {
+                        city = group.city;
+                    } else {
+                        city = venue.city;
+                    }
+                    var state_country;
+                    if (!venue || !venue.state) {
+                        if (group.state == "" || group.state == undefined) {
+                            state_country = group.country.toUpperCase();
+                        } else {
+                            state_country = group.state;
+                        }
+                    } else {
+                        state_country = venue.state;
+                    }
+                    var venue_addr;
+                    if (venue) {
+                        if (venue.name !== undefined) {
+                            venue_addr = venue.name + " - ";
+                        } else if (venue.address_1 !== undefined) {
+                            venue_addr = venue.address_1 + " - ";
+                        } else {
+                            venue_addr = "";
+                        }
+                    } else {
+                        venue_addr = "";
+                    }
+                    var location = venue_addr + city + ", " + state_country;
+                    if (event.rsvp_limit !== undefined) {
+                        if ((event.rsvp_limit-event.yes_rsvp_count) > 0) {
+                            if ((event.rsvp_limit-event.yes_rsvp_count) == 1) {
+                                nombrePlaces = (event.rsvp_limit-event.yes_rsvp_count) + " place libre";
+                            } else {
+                                nombrePlaces = (event.rsvp_limit-event.yes_rsvp_count) + " places libres";
+                            }
+                        } else {
+                            nombrePlaces = "COMPLET";
+                        }
+                    } else {
+                        nombrePlaces = "Entrée libre";
+                    }
+                    if (event.fee !== undefined) {
+                        prix = event.fee.amount + " " + event.fee.currency + " " + event.fee.description;
+                    } else {
+                        prix = "Gratuit";
+                    }
+
+                    $('.mup-events', ctx).append('<span class="mup-stats"> <div class="next-event"> \
+                    <h4><div class="mup-tlabel">' + getFormattedDate(event.time) + ' &nbsp | &nbsp ' + getFormattedTime(event.time) + "</div>" +
+                        addLink(event.name, event.event_url) + '<div class="mup-tlabel">' + nombrePlaces + ' - ' + prix + '</div>' +
+                        '<h4><button class="mup-button">' + addLink('S\'INSCRIRE', event.url) + '</button></h4>'+
+                        '<div class="mup-tlabel">' + location + '</div>' + '</h4>' + '</div> </span>');
+                },
+                nextPage = function () {
+                    if((currentPage+1) <= totalPage) {
+                        currentPage +=1 ;
+                        loadPage(currentPage);
+                    }
+                },
+                previousPage = function () {
+                    if((currentPage-1) >= 1) {
+                        currentPage -=1 ;
+                        loadPage(currentPage);
+                    }
+                },
+                loadPage = function (page) {
+                    $.getJSON($queries.events(page), function (data) {
+                        if (data.status && data.status.match(/^200/) == null) {
+                            alert(data.status + ": " + data.details);
+                        } else {
+                            $('.mup-events', ctx).empty();
+                            $('.mup-pagination', ctx).empty();
+                            if (data.results.length == 0) {
+                                $('.mup-events', ctx).append('<span class="mup-stats">' + '<div class="next-event">' + '<span class="mup-tlabel">' + 'Aucun évenement prévu' + '</span>' + '</div>'+'</span>');
+                            } else {
+                                totalPage = data.meta.total_count;
+                                if (data.meta.count < totalPage) {
+                                    $('.mup-pagination', ctx).append('<span class="mup-stats">' + '<h4><button class="mup-button previous"> Precedent </button>' +
+                                        '<span class="mup-tlabel">' + page + ' / ' + totalPage + '</span>' +
+                                        '<button class="mup-button next"> Suivant </button></h4></span>');
+                                    setEvents();
+                                }
+                                $.each(data.results, function (i, ev) {
+                                    addEvent(ev);
+                                });
+                            }
+                        }
+                    });
+                },
+                setEvents = function () {
+                    oBtnNext = $('.mup-button.next', ctx);
+                    oBtnPrev = $('.mup-button.previous', ctx);
+                    if(oBtnPrev.length > 0 && oBtnNext.length > 0){
+                        oBtnPrev.click(function(){previousPage(); return false;});
+                        oBtnNext.click(function(){nextPage(); return false;});
+                    }
+                },
+                addLink = function (content, link) {
+                    return '<a target="_top" href="' + link + '">' + content + '</a>';
+                },
+                addImage = function (src, alt) {
+                    return src == "" ? '' : '<div class="mup-img-wrap"><img src="' + src + '" width="' + ($parameters.width - 50) + '" alt="' + alt + '" class="mup-img"/></div>';
+                },
+                addStarRating = function (rating) {
+                    var base_url = 'https://a248.e.akamai.net/secure.meetupstatic.com/img/03784007994490629714917/star_';
+                    var starlink = '';
+                    if (rating == 0) {
+                        return 'Aucune évaluation';
+                    } else if (rating < 1.25) {
+                        starlink = "100.png";
+                    } else if (rating < 1.75) {
+                        starlink = "150.png";
+                    } else if (rating < 2.25) {
+                        starlink = "200.png";
+                    } else if (rating < 2.75) {
+                        starlink = "250.png";
+                    } else if (rating < 3.25) {
+                        starlink = "300.png";
+                    } else if (rating < 3.75) {
+                        starlink = "350.png";
+                    } else if (rating < 4.25) {
+                        starlink = "400.png";
+                    } else if (rating < 4.75) {
+                        starlink = "450.png";
+                    } else {
+                        starlink = "500.png";
+                    }
+                    return '<img src="' + base_url + starlink + '" alt="' + rating + '" />';
+
+                },
+                getFormattedDate = function (millis) {
+                    return moment(millis).format("DD MMMM YYYY");
+                },
+                getFormattedTime = function (millis) {
+                    return moment(millis).format("HH:mm");
+                },
+                numberFormat = function (nStr) {
+                    nStr += '';
+                    x = nStr.split('.');
+                    x1 = x[0];
+                    x2 = x.length > 1 ? '.' + x[1] : '';
+                    var rgx = /(\d+)(\d{3})/;
+                    while (rgx.test(x1))
+                        x1 = x1.replace(rgx, '$1' + ',' + '$2');
+                    return x1 + x2;
+                };
+            $.getJSON($queries.groups(), function (data) {
+                if (data.results.length == 0) {
+                    $('.mug-badge', ctx).width($parameters.width);
+                    $('.mug-badge', ctx).append(
+                        '<div class="mup-widget error">\
+                                <div class="errorMsg">Oops. No results for "' + $parameters.urlname + '"</div>\
+					</div>');
+                }
+                else {
+                    group = data.results[0];
+                    $('.mug-badge', ctx).width($parameters.width);
+                    $('.mug-badge', ctx).append(
+                        '<div class="mup-widget">\
+                            <div class="mup-bd">\
+                                <h3>' + addLink(group.name, group.link) + '</h3>\
+            <h4> <div style="padding-top:5px;"><span class="mup-tlabel">Nos prochains évenements</span></div></h4>\
+						<span class="mup-stats">' + addImage(group["group_photo"] ? group.group_photo.photo_link : "", group.name) + numberFormat(group.members) + '<span class="mup-tlabel"> ' + group.who + '</span></span>\
+            <div class="mup-events"></div>\
+            <div class="mup-pagination"></div>\
+            </div>\
+					<div class="mup-ft">\
+						<div class="mup-logo"><div style="float:left;">' + addLink('<img src="./img/FB-f-Logo__blue_29.png">', 'https://www.facebook.com/TagArchery66/') + '</div><div style="float:right;"><div style="float:right;">' + addStarRating(group.rating) + '</div><br><div style="float:right;"><span class="mup-tlabel">Vos évaluations</span></div></div></div>\
+						<div class="mup-getwdgt">' + addLink('www.tagarchery66.fr', 'http://www.tagarchery66.fr/') + '</div>\
+					</div>\
+				</div>'
+                    );
+                    loadPage(currentPage);
+                    /*$.getJSON($queries.events(currentPage), function (data) {
+                        if (data.status && data.status.match(/^200/) == null) {
+                            alert(data.status + ": " + data.details);
+                        } else {
+                            if (data.results.length == 0) {
+                                $('.mup-events', ctx).append('<span class="mup-stats">' + '<div class="next-event">' + '<span class="mup-tlabel">' + 'Aucun évenement prévu' + '</span>' + '</div>'+'</span>');
+                            } else {
+                                totalPage = data.meta.total_count;
+                                $('.mup-pagination', ctx).append('<span class="mup-stats">' + '<h4><button class="mup-button previous"> Precedent </button>' +
+                                    '<span class="mup-tlabel">' + currentPage + ' / ' + totalPage + '</span>' +
+                                '<button class="mup-button next"> Suivant </button></h4></span>');
+                                setEvents();
+                                $.each(data.results, function (i, ev) {
+                                    addEvent(ev);
+                                });
+                            }
+                        }
+                    });*/
+                }
+            });
+        });
+    </script>
+    <style type="text/css" media="screen">
+        .next-event {
+
+        }
+
+        .mug-badge {
+            font-family: "lucida grande", lucida, tahoma, helvetica, arial, sans-serif !important;
+            font-size: 12px;
+        }
+
+        .mug-badge .mup-widget,
+        .mug-badge .mup-widget .mup-hd a {
+            background: #1A1A1A;
+            color: #f2f2f2;
+        }
+
+        .mug-badge .mup-widget {
+            border-radius: 5px;
+            -moz-border-radius: 5px;
+            -webkit-border-radius: 5px;
+            padding-top: 8px;
+        }
+
+        .mug-badge .mup-widget h3,
+        .mug-badge .mup-widget h4,
+        .mug-badge .mup-widget p {
+            line-height: 1.2 !important;
+            text-align: center;
+        }
+
+        .mug-badge .mup-widget h3 {
+            font-size: 18px;
+            color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .mug-badge .mup-widget h4 {
+            font-size: 13px;
+        }
+
+        .mug-badge .mup-widget h5 {
+            font-size: 20px;
+            margin: 0 auto;
+            text-align: center;
+            letter-spacing: -1px;
+            text-shadow: 1px 1px 1px #1A1A1A;
+        }
+
+        .mug-badge .mup-widget p {
+            text-align: center;
+        }
+
+        .mug-badge .mup-widget .mup-bd,
+        .mug-badge .mup-widget .mup-timeline,
+        .mug-badge .mup-widget .mup-bd p {
+            color: #f2f2f2;
+        }
+
+        .mug-badge .mup-widget .mup-bd {
+            border-radius: 5px;
+            -moz-border-radius: 5px;
+            -webkit-border-radius: 5px;
+            padding: 8px 6px;
+            margin: 0 8px;
+            background: #333;
+        }
+
+        .mug-badge .mup-widget a,
+        .mug-badge .mup-widget a:active,
+        .mug-badge .mup-widget a:visited {
+            color: #f2f2f2;
+            text-decoration: none;
+        }
+
+        .mug-badge .mup-widget a:hover {
+            color: #01cb43;
+            text-decoration: none;
+        }
+
+        .mug-badge .mup-widget .mup-button a:hover {
+            color: #c8c8c8;
+            text-decoration: none;
+        }
+
+        .mug-badge .mup-widget .mup-tlabel {
+            font-size: 10px;
+            color: #AAA;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
+
+        .mug-badge .mup-widget .mup-stats {
+            display: block;
+            margin: 6px 0;
+            padding: 4px;
+            text-align: center;
+            background: #1A1A1A;
+            border-radius: 3px;
+            -moz-border-radius: 3px;
+            -webkit-border-radius: 3px;
+        }
+
+        .mug-badge .mup-widget .mup-button {
+            /*width: 30px;*/
+            display: block;
+            margin: 0 auto;
+            padding: 3px 6px;
+            /*background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#2266BB), to(#102f56));
+            background: -moz-linear-gradient(0% 100% 90deg, #102F56, #2266BB);
+            background-color: #2266BB;
+            border: 1px solid #0d2748;*/
+            background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#01b03e), to(#016228));
+            background: -moz-linear-gradient(0% 100% 90deg, #016228, #01b03e);
+            background-color: #016228;
+            border: 1px solid #016228;
+            border-radius: 3px;
+            -moz-border-radius: 3px;
+            -webkit-border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            color: #f2f2f2;
+            text-align: center;
+        }
+
+        .mug-badge .mup-widget .mup-pagination .mup-button {
+            display: inline;
+            margin: 0 5px;
+            /*background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#01b03e), to(#016228));
+            background: -moz-linear-gradient(0% 100% 90deg, #016228, #01b03e);
+            background-color: #016228;
+            border: 1px solid #016228;*/
+        }
+
+        .mug-badge .mup-widget .mup-button:hover {
+            color: #c8c8c8;
+            cursor: hand;
+        }
+
+        .mug-badge .mup-widget .mup-img {
+            overflow: hidden;
+            border-radius: 3px;
+            -moz-border-radius: 3px;
+            -webkit-border-radius: 3px;
+        }
+
+        .mug-badge .mup-widget .mup-img-wrap {
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+        .mug-badge .mup-widget .mup-ft .mup-getwdgt {
+            padding: 3px 0;
+            font-size: 8px;
+            text-align: center;
+            background: #0A0A0A;
+            -webkit-border-bottom-right-radius: 5px;
+            -webkit-border-bottom-left-radius: 5px;
+            -moz-border-radius-bottomright: 5px;
+            -moz-border-radius-bottomleft: 5px;
+            border-bottom-right-radius: 5px;
+            border-bottom-left-radius: 5px;
+        }
+
+        .mug-badge .mup-widget .mup-ft .mup-logo {
+            padding: 6px 8px;
+            height: 25px;
+        }
+    </style>
+</head>
+<body class="framed-mup-widget">
+<div class="mug-badge"></div>
+</body>
+</html>

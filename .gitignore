@@ -1,1 +1,6 @@
 api_key.js
+.idea
+Supprimerait .idea/atlassian-ide-plugin.xml
+Supprimerait .idea/modules.xml
+Supprimerait .idea/widgets.iml
+Supprimerait .idea/workspace.xml
