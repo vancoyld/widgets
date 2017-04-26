@@ -19,7 +19,7 @@
                 return mup_widget.api_call("/2/groups", {group_urlname: $parameters.urlname});
             },
             events: function (page) {
-                return mup_widget.api_call("/2/events", {group_urlname: $parameters.urlname, page: '1', offset:page-1});
+                return mup_widget.api_call("/2/events", {group_urlname: $parameters.urlname, page: '3', offset:page-1});
             }
         };
     </script>
@@ -88,8 +88,8 @@
 
                     $('.mup-events', ctx).append('<span class="mup-stats"> <div class="next-event"> \
                     <h4><div class="mup-tlabel">' + getFormattedDate(event.time) + ' &nbsp | &nbsp ' + getFormattedTime(event.time) + "</div>" +
-                        addLink(event.name, event.event_url, "top") + '<div class="mup-tlabel">' + nombrePlaces + ' - ' + prix + '</div>' +
-                        '<h4><button class="mup-button">' + addLink('S\'INSCRIRE', event.event_url, "top") + '</button></h4>'+
+                        addLink(event.name, event.event_url, "blank") + '<div class="mup-tlabel">' + nombrePlaces + ' - ' + prix + '</div>' +
+                        '<h4><button class="mup-button">' + addLink('S\'INSCRIRE', event.event_url, "blank") + '</button></h4>'+
                         '<div class="mup-tlabel">' + location + '</div>' + '</h4>' + '</div> </span>');
                 },
                 nextPage = function () {
@@ -199,15 +199,14 @@
                     $('.mug-badge', ctx).append(
                         '<div class="mup-widget">\
                             <div class="mup-bd">\
-                                <h3>' + addLink(group.name, group.link, "top") + '</h3>\
+                                <h3>' + addLink(group.name, group.link, "blank") + '</h3>\
             <h4> <div style="padding-top:5px;"><span class="mup-tlabel">Nos prochains évenements</span></div></h4>\
-						<span class="mup-stats">' + addImage(group["group_photo"] ? group.group_photo.photo_link : "", group.name) + numberFormat(group.members) + '<span class="mup-tlabel"> ' + group.who + '</span></span>\
             <div class="mup-events"></div>\
             <div class="mup-pagination"></div>\
             </div>\
 					<div class="mup-ft">\
-						<div class="mup-logo"><div style="float:left;">' + addLink('<img src="./img/FB-f-Logo__blue_29.png">', 'https://www.facebook.com/TagArchery66/', "top") + '</div><div style="float:right;"><div style="float:right;">' + addStarRating(group.rating) + '</div><br><div style="float:right;"><span class="mup-tlabel">Vos évaluations</span></div></div></div>\
-						<div class="mup-getwdgt">' + addLink('www.tagarchery66.fr', 'http://www.tagarchery66.fr/', "top") + '</div>\
+						<div class="mup-logo"><div style="float:left;">' + addLink('<img src="./img/FB-f-Logo__blue_29.png">', 'https://www.facebook.com/TagArchery66/', "blank") + '</div><div style="float:right;"><div style="float:right;">' + addStarRating(group.rating) + '</div><br><div style="float:right;"><span class="mup-tlabel">Vos évaluations</span></div></div></div>\
+						<div class="mup-getwdgt">' + addLink('www.tagarchery66.fr', 'http://www.tagarchery66.fr/', "blank") + '</div>\
 					</div>\
 				</div>'
                     );
